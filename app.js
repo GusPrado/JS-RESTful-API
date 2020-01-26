@@ -39,15 +39,15 @@ app.route('/articles')
 })
 
   .post(async (req, res) => {
-  const article = await Article.create({
-    title: req.body.title,
-    content: req.body.content
-  }, (err) => {
-    if(!err) {
-      res.status(200).json({message: 'New article created'})
-    } else {
-      res.send(error)
-    }
+    await Article.create({
+      title: req.body.title,
+      content: req.body.content
+    }, (err) => {
+      if(!err) {
+        res.status(200).json({message: 'New article created'})
+      } else {
+        res.send(error)
+      }
   })
 })
 
@@ -64,46 +64,48 @@ app.route('/articles')
 ////////////// Requests targetting all articles  //////////////////
 
 app.route('/articles/:articleTitle')
-  .get((req, res) => {
+  .get( async(req, res) => {
     const { articleTitle } = req.params
 
-    Article.findOne({
-      title: articleTitle
-    }, (err, foundArticle) => {
-      if (foundArticle) {
-        res.status(200).json(foundArticle)
-      } else {
-        res.status(400).json({ message: 'No articles found'})
-      }
+    const foundArticle =  await Article.findOne(
+      {
+        title: articleTitle
+      }, (result) => {
+        if (!result) {
+          console.log('error')
+        }
+      })
+      res.status(200).json(foundArticle)
     })
-  })
 
   .put((req, res) => {
     const { articleTitle } = req.params
-    const { title, content } = req.body
-    // console.log('passou')
-    // console.log(articleTitle,title,content)
+    updateField = req.body
+
+    console.log(articleTitle, updateField, typeof(updateField))
 
     Article.update(
       {title: articleTitle},
-      {title, content},
+      updateField,
       {overwrite: true}),
       (err) => {
-        if(!err) {
-          res.status(200).json({message: 'Article updated'})
-        }
-      }
+        if (!err) {
+          console.log('executou')}
+        //    res.status(200).json({message: 'article updated'})
+        // } res.send(err)
+        console.log('executou erro')      
+      }    
   })
 
   .patch((req, res) => {
     const { articleTitle } = req.params
-    console.log(req.body)
-    Article.update(
+
+    Article.updateOne(
       {title: articleTitle},
       {$set: req.body},
       (err) => {
         if (!err) {
-          res.send('Updated article')
+          res.status(200).json({message: 'article updated'})
         } else {
           res.send(err)
         }
@@ -113,14 +115,15 @@ app.route('/articles/:articleTitle')
 
   .delete((req, res) => {
     const { articleTitle } = req.params
-    console.log(articleTitle)
 
-    Article.findOneAndDelete({
+    Article.deleteOne({
       title: articleTitle
-    }, (err) => {
-      if (err) {
-        throw(err)
-      } res.status(200).json('deleted')
+    }, (err, result) => {
+      if (result) {
+        res.status(200).json({message: 'article deleted'})
+      } else {
+        res.status(400).json({ message: 'No articles found'})
+      }
     })
   })
 
